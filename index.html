@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comics Shop</title>
+    <!-- BOOTSTRAP (CSS) -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+
+    <!-- BOOTSTRAP (JS) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous" defer></script>
+  </head>
+</head>
+<body class="bg-light">
+    <h1 class="text-center text-danger mt-5">Welcome to our Comics Shop</h1>
+
+    <div class="container">
+
+        <form action="/addComic" method="post">
+
+            <input type="text" placeholder="Please enter your Comics Name" class="form-control mt-2" name="name" >
+            <input type="text" placeholder="Please enter your Comics Price" class="form-control mt-2" name="price">
+            <input type="text" placeholder="Please enter your Comics Quantity" class="form-control mt-2" name="quantity">
+            <button class="btn btn-outline-success mt-2">Add Comic</button>
+
+        </form>
+
+        <div id="comics" class="mt-4"></div>
+
+        
+        
+        <div id="update" class="mt-5"></div>
+    </div>
+
+    <script>
+        function getAllComics() {
+            fetch('http://localhost:3000/comics')
+            .then(res => res.json())
+            .then(comics => {
+                const container = document.getElementById('comics');
+                container.innerHTML = '';
+                comics.forEach(comic => {
+                    const p = document.createElement('p');
+                    p.innerHTML = `The comic <b>${comic.name}</b> costs <i>${comic.price}</i> tk, we've ${comic.quantity} pieces in stock
+                    <button onclick="loadComic('${comic._id}')" class="btn btn-outline-warning">Update</button>
+                    <button onclick="deleteComic(event, '${comic._id}')" class="btn btn-outline-danger">Delete</button>
+                    `;
+                    container.appendChild(p);
+                })
+               
+            })
+        }
+
+        function loadComic(id) {
+            console.log(id)
+            fetch(`/comic/${id}`)
+            .then(res => res.json())
+            .then(data => {
+
+                const update = document.getElementById('update');
+                update.innerHTML = `
+
+                    <h3>Update Comic Info</h3>
+                    <label>Name</label>
+                    <input type="text" class="form-control mt-2" value="${data.name}" name="name" id="name">
+                    <label>Price</label>
+                    <input type="text" class="form-control mt-2" value="${data.price}" name="price" id="price">
+                    <label>Quantity</label>
+                    <input type="text" value="${data.quantity}" class="form-control mt-2" name="quantity" id="quantity">
+                    <button onclick="updateComic('${data._id}')" class="btn btn-outline-primary mt-2">Submit</button>
+                
+                `;
+            })
+
+        }
+
+        function updateComic(id) {
+            const name = document.getElementById("name").value;
+            const price = document.getElementById("price").value;
+            const quantity = document.getElementById("quantity").value;
+            const comic = {
+                name,
+                price,
+                quantity
+            };
+
+            fetch(`/update/${id}`, {
+                method: 'PATCH',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify((comic))
+            })
+            .then(res => res.json())
+            .then(result => {
+                if(result.success) {
+                    getAllComics();
+                    document.getElementById('update').innerHTML = '';
+                }
+            });
+        }
+
+        function deleteComic(event, id) {
+            fetch(`/delete/${id}`, {
+                method: "DELETE"
+            })
+            .then(res => res.json())
+            .then(result => {
+                if(result) {
+                    event.target.parentNode.style.display = "none";
+                }
+            })
+
+        }
+        getAllComics();
+    </script>
+</body>
+</html>
